@@ -1,100 +1,180 @@
 package fansirsqi.xposed.sesame.task.omegakoiTown;
+
 import java.util.UUID;
 import fansirsqi.xposed.sesame.hook.RequestManager;
+import fansirsqi.xposed.sesame.util.RpcHelper;
+
+/**
+ * OmegakoiTown RPC调用类
+ */
 public class OmegakoiTownRpcCall {
-    private static final String version = "2.0";
-    private static String getUuid() {
-        StringBuilder sb = new StringBuilder();
-        for (String str : UUID.randomUUID().toString().split("-")) {
-            sb.append(str.substring(str.length() / 2));
-        }
-        return sb.toString();
-    }
+    private static final String VERSION = "2.0";
+
+    /**
+     * 获取房屋产品信息
+     */
     public static String houseProduct() {
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.house.product",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\",\"shouldScoreReward\":true}]");
+                RpcHelper.buildParamsWithBizNo(""));
     }
+
+    /**
+     * 建造房屋
+     */
     public static String houseBuild(String groundId, String houseId) {
+        String params = "\"groundId\":\"" + groundId + "\",\"houseId\":\"" + houseId + "\"";
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.house.build",
-                "[{\"groundId\":\"" + groundId + "\",\"houseId\":\"" + houseId
-                        + "\",\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(params));
     }
+
+    /**
+     * 获取用户分数
+     */
     public static String getUserScore() {
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.user.getUserScore",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(""));
     }
+
+    /**
+     * 获取可收集的气球
+     */
     public static String getBalloonsReadyToCollect() {
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.balloon.getBalloonsReadyToCollect",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(""));
     }
+
+    /**
+     * 获取用户任务
+     */
     public static String getUserQuests() {
+        String params = "\"disableQuests\":true,\"scenarioId\":\"shopNewestTips\"";
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.scenario.getUserQuests",
-                "[{\"disableQuests\":true,\"outBizNo\":\"" + UUID.randomUUID().toString()
-                        + "\",\"scenarioId\":\"shopNewestTips\"}]");
+                RpcHelper.buildParamsWithBizNo(params));
     }
-    public static String completeQuest(String questId, String scenarioId) {
+
+    /**
+     * 完成任务
+     */
+    public static String completeQuest(String questId) {
+        String params = "\"questId\":\"" + questId + "\"";
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.scenario.completeQuest",
-                "[{\"optionIndex\":0,\"outBizNo\":\"" + UUID.randomUUID().toString() + "\",\"questId\":\"" + questId
-                        + "\",\"scenarioId\":\"" + scenarioId + "\",\"showType\":\"mayor\"}]");
+                RpcHelper.buildParamsWithBizNo(params));
     }
-    public static String groundBuy(String groundId) {
+
+    /**
+     * 购买土地
+     */
+    public static String buyGround(String groundId) {
+        String params = "\"groundId\":\"" + groundId + "\"";
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.ground.buy",
-                "[{\"groundId\":\"" + groundId + "\",\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(params));
     }
-    public static String getCurrentBalloonsByTarget(String groundId) {
+
+    /**
+     * 获取当前气球
+     */
+    public static String getCurrentBalloonsByTarget(String targetId) {
+        String params = "\"targetId\":\"" + targetId + "\"";
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.balloon.getCurrentBalloonsByTarget",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(params));
     }
+
+    /**
+     * 获取用户任务列表
+     */
     public static String getUserTasks() {
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.task.getUserTasks",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(""));
     }
-    public static String queryAppInfo(String app_id) {
+
+    /**
+     * 查询应用信息
+     */
+    public static String queryAppInfo() {
         return RequestManager.requestString("alipay.mappconfig.queryAppInfo",
-                "[{\"baseInfoReq\":{\"appIds\":[\"" + app_id
-                        + "\"],\"platform\":\"ANDROID\",\"pre\":false,\"width\":0},\"packInfoReq\":{\"bundleid\":\"com.alipay.alipaywallet\",\"channel\":\"offical\",\"client\":\"10.5.36.8100\",\"env\":\"production\",\"platform\":\"android\",\"protocol\":\"1.0\",\"query\":\"{\\\""
-                        + app_id + "\\\":{\\\"app_id\\\":\\\"" + app_id
-                        + "\\\",\\\"version\\\":\\\"*\\\",\\\"isTarget\\\":\\\"YES\\\"}}\",\"reqmode\":\"async\",\"sdk\":\"1.3.0.0\",\"system\":\"10\"},\"reqType\":2}]");
+                RpcHelper.buildParams(""));
     }
+
+    /**
+     * 触发任务奖励
+     */
     public static String triggerTaskReward(String taskId) {
+        String params = "\"taskId\":\"" + taskId + "\"";
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.task.triggerTaskReward",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\",\"taskId\":\"" + taskId + "\"}]");
+                RpcHelper.buildParamsWithBizNo(params));
     }
+
+    /**
+     * 获取分享ID
+     */
     public static String getShareId() {
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.user.getShareId",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(""));
     }
+
+    /**
+     * 获取风蝶数据
+     */
     public static String getFengdieData() {
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.user.getFengdieData",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(""));
     }
+
+    /**
+     * 获取签到状态
+     */
     public static String getSignInStatus() {
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.signIn.getSignInStatus",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(""));
     }
+
+    /**
+     * 签到
+     */
     public static String signIn() {
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.signIn.signIn",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(""));
     }
+
+    /**
+     * 获取产品信息
+     */
     public static String getProduct() {
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.shop.getProduct",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(""));
     }
+
+    /**
+     * 获取用户土地
+     */
     public static String getUserGrounds() {
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.ground.getUserGrounds",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(""));
     }
+
+    /**
+     * 获取用户房屋
+     */
     public static String getUserHouses() {
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.house.getUserHouses",
-                "[{\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(""));
     }
-    public static String collect(String houseId, long id) {
+
+    /**
+     * 收集房屋
+     */
+    public static String houseCollect(String houseId) {
+        String params = "\"houseId\":\"" + houseId + "\"";
         return RequestManager.requestString("com.alipay.omegakoi.town.v2.house.collect",
-                "[{\"houseId\":\"" + houseId + "\",\"id\":" + id
-                        + ",\"outBizNo\":\"" + UUID.randomUUID().toString() + "\"}]");
+                RpcHelper.buildParamsWithBizNo(params));
     }
-    public static String matchCrowd() {
+
+    /**
+     * 匹配人群
+     */
+    public static String matchCrowd(String crowdId) {
+        String params = "\"crowdId\":\"" + crowdId + "\"";
         return RequestManager.requestString("com.alipay.omegakoi.common.user.matchCrowd",
-                "[{\"crowdCodes\":[\"OUW7WQPH7\",\"OM9K933XZ\"],\"outBizNo\":\"60123460-b6ac-11ee-95b2-3be423343437\"}]");
+                RpcHelper.buildParamsWithBizNo(params));
     }
 }

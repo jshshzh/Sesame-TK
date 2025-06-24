@@ -11,117 +11,151 @@ import fansirsqi.xposed.sesame.model.BaseModel;
  */
 public class Log {
     private static final String TAG = "";
-    private static final Logger RUNTIME_LOGGER;
-    private static final Logger SYSTEM_LOGGER;
-    private static final Logger RECORD_LOGGER;
-    private static final Logger DEBUG_LOGGER;
-    private static final Logger FOREST_LOGGER;
-    private static final Logger FARM_LOGGER;
-    private static final Logger OTHER_LOGGER;
-    private static final Logger ERROR_LOGGER;
-    private static final Logger CAPTURE_LOGGER;
-
+    
+    /**
+     * 日志类型枚举
+     */
+    public enum LogType {
+        SYSTEM(LoggerFactory.getLogger("system")),
+        RUNTIME(LoggerFactory.getLogger("runtime")),
+        RECORD(LoggerFactory.getLogger("record")),
+        DEBUG(LoggerFactory.getLogger("debug")),
+        FOREST(LoggerFactory.getLogger("forest")),
+        FARM(LoggerFactory.getLogger("farm")),
+        OTHER(LoggerFactory.getLogger("other")),
+        ERROR(LoggerFactory.getLogger("error")),
+        CAPTURE(LoggerFactory.getLogger("capture"));
+        
+        private final Logger logger;
+        
+        LogType(Logger logger) {
+            this.logger = logger;
+        }
+        
+        public Logger getLogger() {
+            return logger;
+        }
+    }
+    
     static {
         Logback.configureLogbackDirectly();
-        RUNTIME_LOGGER = LoggerFactory.getLogger("runtime");
-        SYSTEM_LOGGER = LoggerFactory.getLogger("system");
-        RECORD_LOGGER = LoggerFactory.getLogger("record");
-        DEBUG_LOGGER = LoggerFactory.getLogger("debug");
-        FOREST_LOGGER = LoggerFactory.getLogger("forest");
-        FARM_LOGGER = LoggerFactory.getLogger("farm");
-        OTHER_LOGGER = LoggerFactory.getLogger("other");
-        ERROR_LOGGER = LoggerFactory.getLogger("error");
-        CAPTURE_LOGGER = LoggerFactory.getLogger("capture");
     }
 
-    private static String truncateLogmsg(String msg) {
-        if (msg.length() > 16) {
-            return msg.substring(0, 16) + "...";
+    /**
+     * 通用日志记录方法
+     */
+    private static void log(LogType logType, String message, boolean isError) {
+        if (logType == LogType.RUNTIME || logType == LogType.RECORD) {
+            LogType.SYSTEM.getLogger().info(TAG + "{}", message);
         }
-        return msg;
+        
+        if (logType == LogType.RECORD && !BaseModel.getRecordLog().getValue()) {
+            return;
+        }
+        
+        if (isError) {
+            logType.getLogger().error(TAG + "{}", message);
+        } else {
+            logType.getLogger().info(TAG + "{}", message);
+        }
+    }
+    
+    /**
+     * 记录日志
+     */
+    private static void log(LogType logType, String message) {
+        log(logType, message, false);
+    }
+    
+    /**
+     * 记录带标签的日志
+     */
+    private static void log(LogType logType, String tag, String message) {
+        log(logType, "[" + tag + "]: " + message);
     }
 
+    // 系统日志
     public static void system(String msg) {
-        SYSTEM_LOGGER.info(TAG + "{}", msg);
+        log(LogType.SYSTEM, msg);
     }
 
     public static void system(String TAG, String msg) {
-        system("[" + TAG + "]: " + msg);
+        log(LogType.SYSTEM, TAG, msg);
     }
 
+    // 运行时日志
     public static void runtime(String msg) {
-        system(msg);
-        RUNTIME_LOGGER.info(TAG + "{}", msg);
+        log(LogType.RUNTIME, msg);
     }
 
     public static void runtime(String TAG, String msg) {
-        runtime("[" + TAG + "]: " + msg);
+        log(LogType.RUNTIME, TAG, msg);
     }
 
+    // 记录日志
     public static void record(String msg) {
-        runtime(msg);
-        if (BaseModel.getRecordLog().getValue()) {
-            RECORD_LOGGER.info(TAG + "{}", msg);
-        }
+        log(LogType.RECORD, msg);
     }
 
     public static void record(String TAG, String msg) {
-        record("[" + TAG + "]: " + msg);
+        log(LogType.RECORD, TAG, msg);
     }
 
+    // 森林日志
     public static void forest(String msg) {
-        record(msg);
-        FOREST_LOGGER.info("{}", msg);
+        log(LogType.FOREST, msg);
     }
 
     public static void forest(String TAG, String msg) {
-        forest("[" + TAG + "]: " + msg);
+        log(LogType.FOREST, TAG, msg);
     }
 
+    // 农场日志
     public static void farm(String msg) {
-        record(msg);
-        FARM_LOGGER.info("{}", msg);
+        log(LogType.FARM, msg);
     }
 
     public static void farm(String TAG, String msg) {
-        farm("[" + TAG + "]: " + msg);
+        log(LogType.FARM, TAG, msg);
     }
 
+    // 其他日志
     public static void other(String msg) {
-        record(msg);
-        OTHER_LOGGER.info("{}", msg);
+        log(LogType.OTHER, msg);
     }
 
     public static void other(String TAG, String msg) {
-        other("[" + TAG + "]: " + msg);
+        log(LogType.OTHER, TAG, msg);
     }
 
+    // 调试日志
     public static void debug(String msg) {
-        runtime(msg);
-        DEBUG_LOGGER.info("{}", msg);
+        log(LogType.DEBUG, msg);
     }
 
     public static void debug(String TAG, String msg) {
-        debug("[" + TAG + "]: " + msg);
+        log(LogType.DEBUG, TAG, msg);
     }
 
+    // 错误日志
     public static void error(String msg) {
-        runtime(msg);
-        ERROR_LOGGER.error(TAG + "{}", msg);
+        log(LogType.ERROR, msg, true);
     }
 
     public static void error(String TAG, String msg) {
-        error("[" + TAG + "]: " + msg);
+        log(LogType.ERROR, TAG, msg);
     }
 
+    // 捕获日志
     public static void capture(String msg) {
-        CAPTURE_LOGGER.info(TAG + "{}", msg);
+        log(LogType.CAPTURE, msg);
     }
 
     public static void capture(String TAG, String msg) {
-        capture("[" + TAG + "]: " + msg);
+        log(LogType.CAPTURE, TAG, msg);
     }
 
+    // 异常堆栈跟踪
     public static void printStackTrace(Throwable th) {
         String stackTrace = "error: " + android.util.Log.getStackTraceString(th);
         error(stackTrace);
@@ -151,6 +185,4 @@ public class Log {
         String stackTrace = "[" + TAG + "] Throwable error: " + android.util.Log.getStackTraceString(e);
         error(msg, stackTrace);
     }
-
-
 }

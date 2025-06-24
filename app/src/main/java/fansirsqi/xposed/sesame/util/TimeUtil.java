@@ -14,6 +14,166 @@ import java.util.Locale;
  * 时间工具类。 提供了一系列方法来处理时间相关的操作，包括时间范围检查、时间比较、日期格式化等。
  */
 public class TimeUtil {
+    private static final String TAG = "TimeUtil";
+
+    /**
+     * 获取当前时间戳
+     */
+    public static long getCurrentTimeMillis() {
+        return System.currentTimeMillis();
+    }
+
+    /**
+     * 获取当前时间字符串
+     */
+    public static String getCurrentTimeString() {
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA).format(getCurrentTimeMillis());
+    }
+
+    /**
+     * 获取当前日期字符串
+     */
+    public static String getCurrentDateString() {
+        return new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(getCurrentTimeMillis());
+    }
+
+    /**
+     * 根据时间戳获取Calendar对象
+     */
+    public static Calendar getCalendarByTimeMillis(Long timeMillis) {
+        if (timeMillis == null) {
+            timeMillis = getCurrentTimeMillis();
+        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(timeMillis);
+        return calendar;
+    }
+
+    /**
+     * 根据时间字符串获取今天的Calendar对象
+     */
+    public static Calendar getTodayCalendarByTimeStr(String timeStr) {
+        return getCalendarByTimeStr(null, timeStr);
+    }
+
+    /**
+     * 根据时间字符串获取Calendar对象
+     */
+    public static Calendar getCalendarByTimeStr(Long timeMillis, String timeStr) {
+        try {
+            Calendar calendar = getCalendarByTimeMillis(timeMillis);
+            if (timeStr != null && !timeStr.isEmpty()) {
+                String[] timeParts = timeStr.split(":");
+                if (timeParts.length >= 2) {
+                    calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(timeParts[0]));
+                    calendar.set(Calendar.MINUTE, Integer.parseInt(timeParts[1]));
+                    calendar.set(Calendar.SECOND, 0);
+                    calendar.set(Calendar.MILLISECOND, 0);
+                }
+            }
+            return calendar;
+        } catch (Exception e) {
+            Log.printStackTrace(TAG, e);
+            return null;
+        }
+    }
+
+    /**
+     * 比较时间戳与时间字符串
+     */
+    public static Integer compareTimeStr(Long timeMillis, String compareTimeStr) {
+        try {
+            Calendar timeCalendar = getCalendarByTimeMillis(timeMillis);
+            Calendar compareCalendar = getTodayCalendarByTimeStr(compareTimeStr);
+            if (compareCalendar != null) {
+                return timeCalendar.compareTo(compareCalendar);
+            }
+        } catch (Exception e) {
+            Log.printStackTrace(TAG, e);
+        }
+        return null;
+    }
+
+    /**
+     * 检查当前时间是否在指定时间之后
+     */
+    public static boolean isNowAfterTimeStr(String afterTimeStr) {
+        return isAfterTimeStr(getCurrentTimeMillis(), afterTimeStr);
+    }
+
+    /**
+     * 检查时间戳是否在指定时间之前
+     */
+    public static boolean isBeforeTimeStr(Long timeMillis, String beforeTimeStr) {
+        Integer compared = compareTimeStr(timeMillis, beforeTimeStr);
+        return compared != null && compared < 0;
+    }
+
+    /**
+     * 检查时间戳是否在指定时间之后
+     */
+    public static boolean isAfterTimeStr(Long timeMillis, String afterTimeStr) {
+        Integer compared = compareTimeStr(timeMillis, afterTimeStr);
+        return compared != null && compared > 0;
+    }
+
+    /**
+     * 检查时间戳是否在指定时间之前或等于
+     */
+    public static boolean isBeforeOrEqualTimeStr(Long timeMillis, String beforeTimeStr) {
+        Integer compared = compareTimeStr(timeMillis, beforeTimeStr);
+        return compared != null && compared <= 0;
+    }
+
+    /**
+     * 检查时间戳是否在指定时间之后或等于
+     */
+    public static boolean isAfterOrEqualTimeStr(Long timeMillis, String afterTimeStr) {
+        Integer compared = compareTimeStr(timeMillis, afterTimeStr);
+        return compared != null && compared >= 0;
+    }
+
+    /**
+     * 格式化时间差
+     */
+    public static String formatTimeDifference(long milliseconds) {
+        long seconds = milliseconds / 1000;
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        long days = hours / 24;
+
+        if (days > 0) {
+            return days + "天" + (hours % 24) + "小时";
+        } else if (hours > 0) {
+            return hours + "小时" + (minutes % 60) + "分钟";
+        } else if (minutes > 0) {
+            return minutes + "分钟" + (seconds % 60) + "秒";
+        } else {
+            return seconds + "秒";
+        }
+    }
+
+    /**
+     * 检查是否在时间范围内
+     */
+    public static boolean isInTimeRange(Long timeMillis, String startTime, String endTime) {
+        if (startTime == null || endTime == null) {
+            return true;
+        }
+        
+        boolean afterStart = isAfterOrEqualTimeStr(timeMillis, startTime);
+        boolean beforeEnd = isBeforeOrEqualTimeStr(timeMillis, endTime);
+        
+        return afterStart && beforeEnd;
+    }
+
+    /**
+     * 检查当前时间是否在时间范围内
+     */
+    public static boolean isNowInTimeRange(String startTime, String endTime) {
+        return isInTimeRange(getCurrentTimeMillis(), startTime, endTime);
+    }
+
     public static Boolean checkNowInTimeRange(String timeRange) {
         return checkInTimeRange(System.currentTimeMillis(), timeRange);
     }
@@ -27,26 +187,8 @@ public class TimeUtil {
         return false;
     }
 
-    public static Boolean checkInTimeRange(Long timeMillis, String timeRange) {
-        try {
-            String[] timeRangeArray = timeRange.split("-");
-            if (timeRangeArray.length == 2) {
-                String min = timeRangeArray[0];
-                String max = timeRangeArray[1];
-                return isAfterOrCompareTimeStr(timeMillis, min) && isBeforeOrCompareTimeStr(timeMillis, max);
-            }
-        } catch (Exception e) {
-            Log.printStackTrace(e);
-        }
-        return false;
-    }
-
     public static Boolean isNowBeforeTimeStr(String beforeTimeStr) {
         return isBeforeTimeStr(System.currentTimeMillis(), beforeTimeStr);
-    }
-
-    public static Boolean isNowAfterTimeStr(String afterTimeStr) {
-        return isAfterTimeStr(System.currentTimeMillis(), afterTimeStr);
     }
 
     public static Boolean isNowBeforeOrCompareTimeStr(String beforeTimeStr) {
@@ -57,24 +199,8 @@ public class TimeUtil {
         return isAfterOrCompareTimeStr(System.currentTimeMillis(), afterTimeStr);
     }
 
-    public static Boolean isBeforeTimeStr(Long timeMillis, String beforeTimeStr) {
-        Integer compared = isCompareTimeStr(timeMillis, beforeTimeStr);
-        if (compared != null) {
-            return compared < 0;
-        }
-        return false;
-    }
-
-    public static Boolean isAfterTimeStr(Long timeMillis, String afterTimeStr) {
-        Integer compared = isCompareTimeStr(timeMillis, afterTimeStr);
-        if (compared != null) {
-            return compared > 0;
-        }
-        return false;
-    }
-
     public static Boolean isBeforeOrCompareTimeStr(Long timeMillis, String beforeTimeStr) {
-        Integer compared = isCompareTimeStr(timeMillis, beforeTimeStr);
+        Integer compared = compareTimeStr(timeMillis, beforeTimeStr);
         if (compared != null) {
             return compared <= 0;
         }
@@ -82,7 +208,7 @@ public class TimeUtil {
     }
 
     public static Boolean isAfterOrCompareTimeStr(Long timeMillis, String afterTimeStr) {
-        Integer compared = isCompareTimeStr(timeMillis, afterTimeStr);
+        Integer compared = compareTimeStr(timeMillis, afterTimeStr);
         if (compared != null) {
             return compared >= 0;
         }
@@ -101,58 +227,6 @@ public class TimeUtil {
             Log.printStackTrace(e);
         }
         return null;
-    }
-
-    public static Calendar getTodayCalendarByTimeStr(String timeStr) {
-        return getCalendarByTimeStr((Long) null, timeStr);
-    }
-
-    public static Calendar getCalendarByTimeStr(Long timeMillis, String timeStr) {
-        try {
-            Calendar timeCalendar = getCalendarByTimeMillis(timeMillis);
-            return getCalendarByTimeStr(timeCalendar, timeStr);
-        } catch (Exception e) {
-            Log.printStackTrace(e);
-        }
-        return null;
-    }
-
-    public static Calendar getCalendarByTimeStr(Calendar timeCalendar, String timeStr) {
-        try {
-            int length = timeStr.length();
-            switch (length) {
-                case 6:
-                    timeCalendar.set(Calendar.SECOND, Integer.parseInt(timeStr.substring(4)));
-                    timeCalendar.set(Calendar.MINUTE, Integer.parseInt(timeStr.substring(2, 4)));
-                    timeCalendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(timeStr.substring(0, 2)));
-                    break;
-                case 4:
-                    timeCalendar.set(Calendar.SECOND, 0);
-                    timeCalendar.set(Calendar.MINUTE, Integer.parseInt(timeStr.substring(2, 4)));
-                    timeCalendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(timeStr.substring(0, 2)));
-                    break;
-                case 2:
-                    timeCalendar.set(Calendar.SECOND, 0);
-                    timeCalendar.set(Calendar.MINUTE, 0);
-                    timeCalendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(timeStr.substring(0, 2)));
-                    break;
-                default:
-                    return null;
-            }
-            timeCalendar.set(Calendar.MILLISECOND, 0);
-            return timeCalendar;
-        } catch (Exception e) {
-            Log.printStackTrace(e);
-        }
-        return null;
-    }
-
-    public static Calendar getCalendarByTimeMillis(Long timeMillis) {
-        Calendar timeCalendar = Calendar.getInstance();
-        if (timeMillis != null) {
-            timeCalendar.setTimeInMillis(timeMillis);
-        }
-        return timeCalendar;
     }
 
     public static String getTimeStr(long ts) {

@@ -8,7 +8,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import fansirsqi.xposed.sesame.model.BaseModel;
 import fansirsqi.xposed.sesame.model.Model;
 import fansirsqi.xposed.sesame.model.ModelFields;
 import fansirsqi.xposed.sesame.model.ModelType;
@@ -23,7 +22,7 @@ public abstract class ModelTask extends Model {
     private static final Map<ModelTask, Thread> MAIN_TASK_MAP = new ConcurrentHashMap<>();
     private static final ThreadPoolExecutor MAIN_THREAD_POOL = new ThreadPoolExecutor(getModelArray().length, Integer.MAX_VALUE, 30L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
     private final Map<String, ChildModelTask> childTaskMap = new ConcurrentHashMap<>();
-    private ChildTaskExecutor childTaskExecutor;
+    private TaskExecutor taskExecutor;
     @Getter
     private final Runnable mainRunnable = new Runnable() {
         private final ModelTask task = ModelTask.this;
@@ -54,7 +53,7 @@ public abstract class ModelTask extends Model {
      */
     @Override
     public final void prepare() {
-        childTaskExecutor = newTimedTaskExecutor();
+        taskExecutor = new TaskExecutor();
     }
 
     /**
@@ -143,10 +142,10 @@ public abstract class ModelTask extends Model {
                     value.cancel();
                 }
                 childTask.setModelTask(this);
-                if (childTaskExecutor.addChildTask(childTask)) {
-                    return childTask;
+                if (taskExecutor != null) {
+                    taskExecutor.submit(childTask);
                 }
-                return null;
+                return childTask;
             });
         } else {
             synchronized (childTaskMap) {
@@ -155,9 +154,10 @@ public abstract class ModelTask extends Model {
                     oldTask.cancel();
                 }
                 childTask.setModelTask(this);
-                if (childTaskExecutor.addChildTask(childTask)) {
-                    childTaskMap.put(childId, childTask);
+                if (taskExecutor != null) {
+                    taskExecutor.submit(childTask);
                 }
+                childTaskMap.put(childId, childTask);
             }
         }
     }
@@ -171,7 +171,7 @@ public abstract class ModelTask extends Model {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             childTaskMap.compute(childId, (key, value) -> {
                 if (value != null) {
-                    childTaskExecutor.removeChildTask(value);
+                    value.cancel();
                 }
                 return null;
             });
@@ -179,7 +179,7 @@ public abstract class ModelTask extends Model {
             synchronized (childTaskMap) {
                 ChildModelTask childTask = childTaskMap.get(childId);
                 if (childTask != null) {
-                    childTaskExecutor.removeChildTask(childTask);
+                    childTask.cancel();
                 }
                 childTaskMap.remove(childId);
             }
@@ -193,15 +193,6 @@ public abstract class ModelTask extends Model {
      */
     public Integer countChildTask() {
         return childTaskMap.size();
-    }
-
-    /**
-     * 启动任务
-     *
-     * @return 是否成功启动任务
-     */
-    public Boolean startTask() {
-        return startTask(false);
     }
 
     /**
@@ -243,8 +234,8 @@ public abstract class ModelTask extends Model {
                 Log.printStackTrace(e);
             }
         }
-        if (childTaskExecutor != null) {
-            childTaskExecutor.clearAllChildTask();
+        if (taskExecutor != null) {
+            taskExecutor.shutdown();
         }
         childTaskMap.clear();
         MAIN_THREAD_POOL.remove(mainRunnable);
@@ -292,24 +283,6 @@ public abstract class ModelTask extends Model {
                 }
             }
         }
-    }
-
-    /**
-     * 创建一个新的子任务执行器
-     *
-     * @return 子任务执行器
-     */
-    private ChildTaskExecutor newTimedTaskExecutor() {
-        ChildTaskExecutor childTaskExecutor;
-        Integer timedTaskModel = BaseModel.getTimedTaskModel().getValue();
-        if (timedTaskModel == BaseModel.TimedTaskModel.SYSTEM) {
-            childTaskExecutor = new SystemChildTaskExecutor();
-        } else if (timedTaskModel == BaseModel.TimedTaskModel.PROGRAM) {
-            childTaskExecutor = new ProgramChildTaskExecutor();
-        } else {
-            throw new RuntimeException("not found childTaskExecutor");
-        }
-        return childTaskExecutor;
     }
 
     @Getter

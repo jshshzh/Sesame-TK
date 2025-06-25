@@ -52,4 +52,4 @@ public class AlipayBeach extends MapperEntity {
             list = Collections.unmodifiableList(list); // 确保返回不可变列表
         }
     }
-}
+} 

@@ -50,15 +50,16 @@ public class ReserveEntity extends MapperEntity {
     public static void remove(String id) {
         getList();
         synchronized (ReserveEntity.class) {
-            List<ReserveEntity> tempList = new ArrayList<>(list); // 创建可变列表的副本
-            Iterator<ReserveEntity> iterator = tempList.iterator();
+            list = new ArrayList<>(list); // 创建可变列表的副本
+            Iterator<ReserveEntity> iterator = list.iterator();
             while (iterator.hasNext()) {
                 ReserveEntity reserve = iterator.next();
                 if (reserve.id.equals(id)) {
                     iterator.remove();
+                    break;
                 }
             }
-            list = Collections.unmodifiableList(tempList); // 确保返回不可变列表
+            list = Collections.unmodifiableList(list); // 确保返回不可变列表
         }
     }
-}
+} 

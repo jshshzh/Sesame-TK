@@ -71,11 +71,6 @@ public class BaseModel extends Model {
             new ListModelField.ListJoinCommaToStringModelField("modelSleepTime", "模块休眠时间(范围|关闭:-1)", ListUtil.newArrayList("0100-0540"));
 
     /**
-     * 定时任务模式选择
-     */
-    @Getter
-    public static final ChoiceModelField timedTaskModel = new ChoiceModelField("timedTaskModel", "定时任务模式", TimedTaskModel.SYSTEM, TimedTaskModel.nickNames);
-    /**
      * 超时是否重启
      */
     @Getter
@@ -170,7 +165,6 @@ public class BaseModel extends Model {
         modelFields.addField(execAtTimeList);//定时执行的时间点列表
         modelFields.addField(wakenAtTimeList);//定时唤醒的时间点列表
         modelFields.addField(energyTime);//能量收集的时间范围
-        modelFields.addField(timedTaskModel);//定时任务模式选择
         modelFields.addField(timeoutRestart);//超时是否重启
         modelFields.addField(waitWhenException);//异常发生时的等待时间
         modelFields.addField(errNotify);//异常通知开关
@@ -217,12 +211,5 @@ public class BaseModel extends Model {
         } catch (Exception e) {
             Log.printStackTrace(e);
         }
-    }
-
-
-    public interface TimedTaskModel {
-        int SYSTEM = 0;
-        int PROGRAM = 1;
-        String[] nickNames = {"🤖系统计时", "📦程序计时"};
     }
 }

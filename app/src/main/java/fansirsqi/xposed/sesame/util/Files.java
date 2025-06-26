@@ -446,33 +446,22 @@ public class Files {
      * @return 文件内容，如果读取失败或没有权限，返回空字符串
      */
     public static String readFromFile(File f) {
-        // 检查文件是否存在
         if (!f.exists()) {
             return "";
         }
-        // 检查文件是否可读
         if (!f.canRead()) {
-            //      Toast.show(f.getName() + "没有读取权限！", true);
             ToastUtil.showToast(f.getName() + "没有读取权限！");
             return "";
         }
         StringBuilder result = new StringBuilder();
-        FileReader fr = null;
-        try {
-            // 使用 FileReader 读取文件内容
-            fr = new FileReader(f);
-            char[] chs = new char[1024];
+        try (BufferedReader br = new BufferedReader(new FileReader(f), 4096)) { // 使用BufferedReader，4K缓冲
+            char[] chs = new char[4096];
             int len;
-            // 按块读取文件内容
-            while ((len = fr.read(chs)) >= 0) {
+            while ((len = br.read(chs)) >= 0) {
                 result.append(chs, 0, len);
             }
         } catch (Throwable t) {
-            // 捕获并记录异常
             Log.printStackTrace(TAG, t);
-        } finally {
-            // 关闭文件流
-            close(fr);
         }
         return result.toString();
     }
@@ -509,12 +498,10 @@ public class Files {
      */
     public static synchronized boolean write2File(String s, File f) {
         if (beforWrite(f)) return false;
-        try {
-            try (FileWriter fw = new FileWriter(f, false)) {
-                fw.write(s);
-                fw.flush();
-                return true;
-            }
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(f, false), 4096)) { // 使用BufferedWriter，4K缓冲
+            bw.write(s);
+            bw.flush();
+            return true;
         } catch (IOException e) {
             Log.printStackTrace(TAG, e);
             return false;
@@ -549,24 +536,21 @@ public class Files {
      * @return 如果数据拷贝成功，返回 true；如果发生 IO 异常或拷贝失败，返回 false
      */
     public static boolean streamTo(InputStream source, OutputStream dest) {
-        byte[] buffer = new byte[1024]; // 创建一个缓冲区，每次读取 1024 字节
+        byte[] buffer = new byte[4096]; // 4K缓冲
         int length;
         try {
-            // 循环读取输入流中的数据并写入输出流
             while ((length = source.read(buffer)) > 0) {
-                dest.write(buffer, 0, length); // 写入数据到输出流
-                dest.flush(); // 强制将数据从输出流刷新到目的地
+                dest.write(buffer, 0, length);
             }
-            return true; // 成功拷贝数据
+            dest.flush(); // 只在最后flush一次
+            return true;
         } catch (IOException e) {
-            // 捕获 IO 异常并打印堆栈信息
             Log.printStackTrace(e);
         } finally {
-            // 关闭输入流和输出流
             closeStream(source);
             closeStream(dest);
         }
-        return false; // 拷贝失败或发生异常
+        return false;
     }
 
     /**
